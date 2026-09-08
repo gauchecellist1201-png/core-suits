@@ -6,3 +6,6 @@ node_modules
 *.tsbuildinfo
 .DS_Store
 .vercel
+
+# Supabase CLI の作業用（追跡しない）
+supabase/.temp/
