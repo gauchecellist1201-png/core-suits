@@ -41,11 +41,17 @@ for (const file of walk("src")) {
 }
 
 // Store の口が organizationId を要求し続けているか（引数を落とすと分離が消える）
+// ★ 以前は i+220 文字という固定長の窓で見ていた。宣言はそれより短いので窓が
+//   次のメソッドの宣言まで届き、そちらの organizationId を見て合格していた。
+//   （変異試験: list< / update< から organizationId を消しても緑のままだった）
+//   窓はその宣言を閉じる ";" までに限る。
 const store = read("src/lib/db/store.ts");
 for (const sig of ["list<", "get<", "update<", "remove<"]) {
   const i = store.indexOf(sig);
   if (i < 0) { problems.push(`store.ts: ${sig} が見つかりません`); continue; }
-  if (!store.slice(i, i + 220).includes("organizationId")) {
+  const end = store.indexOf(";", i);
+  const decl = store.slice(i, end < 0 ? store.length : end);
+  if (!decl.includes("organizationId")) {
     problems.push(`store.ts: ${sig} が organizationId を要求していません`);
   }
 }

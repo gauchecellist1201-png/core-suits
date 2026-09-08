@@ -20,6 +20,9 @@ describe("使用量の上限", () => {
       expect(p.tryOnsPerMonth).toBeGreaterThan(0);
       expect(Number.isFinite(p.tryOnsPerMonth)).toBe(true);
       expect(p.costLimitJpy).toBeGreaterThan(0);
+      // ★ Infinity も「0より大きい」を通ってしまう。変異試験で costLimitJpy を
+      //   Infinity にしたところ、原価が青天井になるのにテストは緑のままだった。
+      expect(Number.isFinite(p.costLimitJpy)).toBe(true);
     }
   });
   it("上位プランほど枠が広い", () => {

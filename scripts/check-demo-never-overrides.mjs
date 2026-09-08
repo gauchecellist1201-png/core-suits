@@ -23,6 +23,17 @@ if (!getStoreBody.includes("if (hasSupabase()) return supabaseStore;")) {
 if (!getStoreBody.includes("VERCEL_ENV") || !getStoreBody.includes("throw new Error")) {
   problems.push("db/index.ts: 本番でローカル保管に落ちたときに止める処理がありません");
 }
+// ★ getStore() の中だけを見ると、その判断のもとになる hasSupabase() の中身が
+//   すり替わっても気づけない。変異試験で hasSupabase() に環境変数の条件を1つ
+//   足したところ（SUITS_USE_SUPABASE が無ければ false）、Supabase を設定した
+//   本番でもローカル保管＝見本データに落ちるのに、この検査は緑のままだった。
+const hasBody = idx.slice(
+  Math.max(0, idx.indexOf("export function hasSupabase")),
+  Math.max(0, idx.indexOf("export function getStore")),
+);
+if (!/return Boolean\(\s*process\.env\.SUPABASE_URL && process\.env\.SUPABASE_SERVICE_ROLE_KEY\s*\);/.test(hasBody)) {
+  problems.push("db/index.ts: hasSupabase() の条件に、接続情報以外のものが混ざっています");
+}
 
 const seed = read("scripts/seed.mjs");
 if (!seed.includes("process.env.SUPABASE_URL")) {

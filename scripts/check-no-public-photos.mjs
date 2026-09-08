@@ -26,6 +26,17 @@ for (const need of ["currentSession", "findShareLinkByToken", "revoked", "expire
   if (!route.includes(need)) problems.push(`media ルートに ${need} の確認がありません`);
 }
 if (!route.includes('"private')) problems.push("media ルートの cache-control が private ではありません");
+// ★ 名前が出てくるだけでは「効いている」ことにならない。
+//   変異試験で currentSession() を呼んだまま 401 を返す行だけ消したところ、
+//   誰でも全画像を取れる状態になったのに、この検査は緑のままだった。
+if (!/if\s*\(!session\)\s*return[^\n]*401/.test(route)) {
+  problems.push("media ルートに、ログインが無いとき 401 で断る行がありません");
+}
+// ★ 同じく expires_at の名前だけでは足りない。不等号の向きが逆だと、
+//   期限切れのリンクだけが通る（変異試験で < を > にしても緑のままだった）。
+if (!route.includes("new Date(link.expires_at).getTime() < Date.now()")) {
+  problems.push("media ルートの期限切れ判定の向きが違います（期限切れを通してしまいます）");
+}
 // 共有トークンで見られる範囲が、そのリンクの試着に限られているか
 if (!route.includes("allowed.has(id)")) problems.push("共有トークンで任意の画像が取れる恐れがあります（許可リストの確認がありません）");
 

@@ -34,13 +34,22 @@ if (!pricing.includes("return null")) problems.push("pricing.ts: 未知のモデ
 if (!pricing.includes("RATES_CHECKED_ON")) problems.push("pricing.ts: 料金を確認した日付がありません");
 
 // プランに無制限が紛れ込んでいないか
+// ★ 以前は tryOnsPerMonth だけを見ていた。原価の上限（costLimitJpy）を Infinity に
+//   しても緑のままで、回数は残っていても青天井に課金される穴が空いていた
+//   （変異試験: enterprise の costLimitJpy: Infinity が素通りした）。
 const plans = read("src/lib/domain/plans.ts");
-if (/tryOnsPerMonth:\s*(Infinity|-1|0\b)/.test(plans)) problems.push("plans.ts: 実質無制限のプランがあります");
+if (/(tryOnsPerMonth|costLimitJpy):\s*(Infinity|-1|0\b)/.test(plans)) {
+  problems.push("plans.ts: 実質無制限（または実質停止）のプランがあります");
+}
 
 // 上限確認をすり抜ける生成経路がないか
 for (const file of walk("src/app/api")) {
   const src = read(file);
-  if (src.includes("getImageProvider(") && !src.includes("generateTryOn")) {
+  // ★ 「generateTryOn が書いてあれば見逃す」という逃げ道があった。同じファイルに
+  //   generateTryOn 経由の入り口と、プロバイダ直叩きの入り口が並ぶと素通りする
+  //   （変異試験: 同じ route.ts に上限確認を通さない PUT を足しても緑だった）。
+  //   API の下でプロバイダを直に掴むこと自体を禁じる。
+  if (src.includes("getImageProvider(")) {
     problems.push(`${file}: 画像プロバイダを直接呼んでいます（上限確認と原価記録を通してください）`);
   }
 }

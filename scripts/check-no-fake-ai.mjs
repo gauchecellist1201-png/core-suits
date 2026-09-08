@@ -27,6 +27,15 @@ if (!panel.includes("reasons_by_ai") || !panel.includes("相性ルール")) {
 }
 const stylist = read("src/lib/server/stylist.ts");
 if (!stylist.includes("byAi: false")) problems.push("stylist.ts: AI が使えないときに byAi を false にしていません");
+// ★ 「どこかに1つあれば合格」では足りない。AI に辿り着けない経路は3つある
+//   （プロバイダ未設定・呼び出し失敗・返答を解釈できない）。変異試験で
+//   「呼び出し失敗」の1つだけ byAi: true に変えたところ、AI が答えていないのに
+//   画面が「AI が書いた」と言う状態になったのに、この検査は緑のままだった。
+const FALLBACK = "reasons: ranked.map(summarizeFactors), byAi: false";
+const fallbacks = stylist.split(FALLBACK).length - 1;
+if (fallbacks < 3) {
+  problems.push(`stylist.ts: AI に辿り着けなかったときの戻り値が byAi: true になっています（3か所必要／${fallbacks}か所）`);
+}
 
 // 生地画像なしの生成が黙って通っていないか
 if (!read("src/lib/ai/types.ts").includes("usedFabricReference")) {

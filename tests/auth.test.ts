@@ -12,6 +12,16 @@ describe("パスワード", () => {
     expect(verifyPassword("secret123", stored)).toBe(true);
     expect(verifyPassword("secret124", stored)).toBe(false);
   });
+  // ★ 「正しい／違うパスワード」の2本だけでは、比較そのものが手抜きでも気づけない。
+  //   変異試験で timingSafeEqual を「先頭4バイトだけ一致すれば true」に変えたところ、
+  //   32ビット当てるだけでログインできる状態なのに、テストは全部緑のままだった。
+  it("保存値の末尾が1文字でも違えば通さない（先頭だけ比べていない）", () => {
+    const stored = hashPassword("secret123");
+    const [tag, salt, hash] = stored.split("$") as [string, string, string];
+    const last = hash.slice(-1);
+    const tampered = `${tag}$${salt}$${hash.slice(0, -1)}${last === "0" ? "1" : "0"}`;
+    expect(verifyPassword("secret123", tampered)).toBe(false);
+  });
   it("形の違う保存値は通さない（例外を投げない）", () => {
     expect(verifyPassword("x", "")).toBe(false);
     expect(verifyPassword("x", "plaintext")).toBe(false);
