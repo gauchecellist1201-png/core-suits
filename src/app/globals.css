@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { color-scheme: light; }
+
+html, body {
+  background: #FAF8F5;
+  color: #1A1917;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* 焦点リング: 濃紺の上でも暖かい白の上でも見えるよう二重（内白 + 外濃紺） */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid #172A45;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px #FFFFFF;
+  border-radius: 3px;
+}
+
+/* transition-all は焦点リングまで補間するので使わない。必要な性質だけ書く。 */
+.t-color { transition: background-color .16s ease, border-color .16s ease, color .16s ease; }
+.t-lift  { transition: box-shadow .18s ease, transform .18s ease; }
+
+@media (prefers-reduced-motion: reduce) {
+  .t-color, .t-lift { transition: none; }
+}
+
+/* 生地スウォッチ: 実物と違う印象にならないよう、影も色被せもしない */
+.swatch { background-size: cover; background-position: center; }
+
+::selection { background: #172A45; color: #FAF8F5; }
